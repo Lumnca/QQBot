@@ -8,7 +8,7 @@ const CONFIG = require('./config.json');
 function gtpTalk(msg,temperature,top_p, frequency_penalty,presence_penalty) {
     console.log("GTP开始接入!")
     var configuration = new Configuration({
-        apiKey: CONFIG.OpenAIKey,
+        apiKey: CONFIG.openaikey,
     });
     var openai = new OpenAIApi(configuration);
     return new Promise((res, rej) => {
