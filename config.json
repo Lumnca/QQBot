@@ -1,0 +1,21 @@
+{
+    "qq": 3568512380,
+    "authkey": "123456",
+    "url": "http://0.0.0.0:8080",
+    "openaikey": "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",
+    "record": true,
+    "ground": [
+        767274788
+    ],
+    "blacklist": [],
+    "admin": [
+        724119519,
+        1050603098
+    ],
+    "cmd": "/admin",
+    "root": 724119519,
+    "recordlen": 10,
+    "emoticon" : [],
+    "showme" : true,
+    "serverurl" : "http://127.0.0.1:3000/"
+}
