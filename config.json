@@ -5,7 +5,8 @@
     "openaikey": "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",
     "record": true,
     "ground": [
-        767274788
+        767274788,
+        717173596
     ],
     "blacklist": [],
     "admin": [
@@ -15,7 +16,7 @@
     "cmd": "/admin",
     "root": 724119519,
     "recordlen": 10,
-    "emoticon" : [],
-    "showme" : true,
-    "serverurl" : "http://127.0.0.1:3000/"
+    "emoticon": [],
+    "showme": true,
+    "serverurl": "http://127.0.0.1:3000/"
 }

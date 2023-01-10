@@ -8,7 +8,7 @@ QQ机器人V2.0 版本 接入Chat-GTP
 
 关键字包含“画”可以让机器人自己画画
 
-问机器人在干嘛，在做什么他就会将当前电脑的截图发出去！！
+支持发当前电脑的截图！！
 
 与他对话中含有表情包3个关键字他将会发出他收集的表情包
 
@@ -75,7 +75,39 @@ V2.0新加功能
 
 `/admin path show 目录` 比如：`/admin path show E:\\QQBot\\img`
 
+查看当前电脑截图:
 
+`/admin showme`
+
+查看机器人好友列表:
+
+`/admin showlist friend`
+
+查看机器人群列表:
+
+`/admin showlist ground`
+
+查看某个群的所有成员
+
+`/admin showground members qq群号`
+
+制作群成员所有信息：
+
+`/admin make groundinfo qq群号`
+
+保存群所有成员信息
+
+`/admin save groundinfo qq群号`
+
+查看所有群员信息（必须要执行了/admin make groundinfo qq群号）这个才能访问到群信息
+
+`/admin showground memberinfo ,,,`
+
+三个逗号代表条件限制
+
+`名字包含关键字,性别包含关键字,年龄小于这个值,qq等级低于这个值`
+
+如`/admin showground memberinfo ,女,25,` 代表是女生年龄小于25
 
 ## root权限
 
@@ -99,7 +131,9 @@ V2.0新加功能
 
 开启与关闭屏幕截图发送功能：
 
-`/root config showme start`
+`/root showme start`
 
-`/root config showme stop`
+`/root showme stop`
+
+
 

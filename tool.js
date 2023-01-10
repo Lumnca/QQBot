@@ -135,7 +135,14 @@ var screenR = function(){
     })
 }
 
+var readJSON = async function(name){
+    var json = await require('./data/'+name+'.json')
+    return json;
+}
 
 
 
-module.exports = { random, isHaveImage, getGroudQQ, getMesage, getSenderName, isAtBot, isHaveImage, getSenderQQ,downloadImg,getImgae, readdir, getRandomFile,screenR}
+
+
+
+module.exports = { random, isHaveImage, getGroudQQ, getMesage, getSenderName, isAtBot, isHaveImage, getSenderQQ,downloadImg,getImgae, readdir, getRandomFile,screenR,readJSON}

@@ -1,10 +1,9 @@
 const { Bot, Message, Middleware } = require('mirai-js');
-// login 3568512380 chuan.868
 const { writeFile } = require('fs');
 const CONFIG = require('./config.json');
 const { Configuration, OpenAIApi } = require("openai");
 const axios = require('axios');
-const { MESSAGE, isAtBot, isHaveImage, getGroudQQ, getSenderName, getSenderQQ, getMesage, isContainGroup, getImgae, downloadImg, readdir, getRandomFile, screenR } = require('./tool')
+const { MESSAGE, isAtBot, isHaveImage, getGroudQQ, getSenderName, getSenderQQ, getMesage, isContainGroup, getImgae, downloadImg, readdir, getRandomFile, screenR, readJSON } = require('./tool')
 const fs = require('fs');
 const ANSWER = require('./data/answer.json')
 const RECORD = require('./data/record.json')
@@ -163,14 +162,14 @@ function sendImg(id, gid, imgurl) {
  * @param {*} gid 
  * @param {*} imgurl 
  */
-function sendLocalImg(id, gid, imgurl){
+function sendLocalImg(id, gid, imgurl) {
     imgurl = imgurl.split("\\")[1]
     console.log(imgurl)
-     //发送给好友
-     if (!gid) {
+    //发送给好友
+    if (!gid) {
         bot.sendMessage({
             friend: id,
-            message:  new Message().addImageId(imgurl)
+            message: new Message().addImageId(imgurl)
         });
     }
     //发送到群组
@@ -261,10 +260,10 @@ bot.on('FriendMessage', data => {
         console.log("已过滤黑名单成员信息！")
     }
     else {
-        if(isHaveImage(data.messageChain)){
+        if (isHaveImage(data.messageChain)) {
             let img = getImgae(data.messageChain)
-            if(img){
-                downloadImg(img.imageId,img.url)
+            if (img) {
+                downloadImg(img.imageId, img.url)
             }
             return;
         }
@@ -278,29 +277,23 @@ bot.on('FriendMessage', data => {
                 rootDeal(cmd[1], cmd[2], cmd[3], id, null)
             }
             else if (cmd[0] == '/admin') {
-                adminDeal(cmd[1], cmd[2], cmd[3], id, null,key)
+                adminDeal(cmd[1], cmd[2], cmd[3], id, null, key)
             }
             else {
                 console.log("无效命令！")
             }
         }
         else {
-            if (key.indexOf('画')>-1) {
+            if (key.indexOf('画') > -1) {
                 console.log("@me 要求绘画")
                 draw(key).then(img => {
                     sendImg(id, groudId, img)
                 })
             }
-            else if(key.indexOf('表情包')>-1){
+            else if (key.indexOf('表情包') > -1) {
                 let img = getRandomFile("./img")
                 console.log(img)
-                sendLocalImg(id, groudId,img)
-            }
-            else if((key.indexOf("干嘛")>-1 || key.indexOf("做什么")>-1) && CONFIG.showme ){
-
-                screenR().then(v=>{
-                    sendImg(id,groudId,CONFIG.serverurl+"screenshot.png")
-                })
+                sendLocalImg(id, groudId, img)
             }
             else {
                 console.log("@me 要求回答")
@@ -328,14 +321,128 @@ bot.on('NudgeEvent', member => {
 })
 
 
+//获取机器人好友列表
+function getFriendList() {
+    return new Promise((res, rej) => {
+        bot.getFriendList().then(list => {
+            let str = '==我的好友列表==\n'
+            list.forEach(m => {
+                str += `QQ:${m.id}\n名称:${m.name}\n=============\n`
+            })
+            res(str)
+        }).catch(e => {
+            rej(e)
+        });
+    })
+}
 
-function getFriendList(){
-    bot.getFriendList().then(res=>{
-        
-    });
+//获取机器人群列表
+function getGroupList() {
+    return new Promise((res, rej) => {
+        bot.getGroupList().then(v => {
+            let str = '==我的群列表==\n';
+            v.data.forEach(m => {
+                str += `QQ群:${m.id}\n群名称:${m.name}\n=============\n`
+            })
+            res(str)
+        }).catch(e => {
+            rej(e)
+        });
+    })
+}
+
+const sf = {
+    "OWNER": "群主",
+    "ADMINISTRATOR": "管理员",
+    "MEMBER": "成员"
+}
+
+/**
+ * 获取群成员消息
+ * @param {*} gid 
+ */
+async function getMemberList(gid) {
+    const memberList = await bot.getMemberList({ group: gid });
+    let str = '==群列表成员==\n';
+    memberList.forEach(m => {
+        str += `QQ:${m.id}\n名称:${m.name}\n身份:${sf[m.permission]}\n入群时间:${new Date(m.joinTimestamp * 1000)}\n=============\n`
+    })
+    return str
+}
+const sex = {
+    'UNKNOWN' : '未识别',
+    'MALE' : '男',
+    'FEMALE' : '女'
 }
 
 
+/**
+ * 获取用户信息
+ * @param {*} id 
+ * @returns 
+ */
+async function getUserProfile(id) {
+    const profile = await bot.getUserProfile({ qq: id });
+    let str = `====QQ:${id}====`;
+    str = `用户名:${profile.nickname}\n性别:${sex[profile.sex]}\n等级:${profile.level}\n邮箱:${profile.email}\n个性签名:${profile.sign}`
+    return str;
+}
+
+var GROUNDMEMBERS = []
+/**
+ * 获取群聊所有信息
+ * @param {*} id 
+ */
+async function getGroudAllMemberInfo(id){
+    const memberList = await bot.getMemberList({ group: id });
+    GROUNDMEMBERS = memberList;
+    memberList.forEach(m=>{
+        bot.getUserProfile({ qq: m.id }).then(v=>{
+            m.age = v.age
+            m.level = v.level
+            m.sex = sex[v.sex]
+            m.sign = v.sign
+        });
+    })
+}
+
+/**
+ * 保存记录的群聊信息
+ * @param {*} id 
+ */
+function saveGroundInfo(id){
+    saveJsonFile('./data/'+id+".json",GROUNDMEMBERS);
+}
+
+function getMemberData(id){
+    readJSON(String(id)).then(v=>{
+        GROUNDMEMBERS = v
+        console.log('读取成功！')
+    })
+}
+
+function getMemberBy(name,sex,age,level){
+    let str = `=====获取结果=====`;
+    let data = GROUNDMEMBERS
+    if(name){
+        data = data.filter(e=>{return e.name.indexOf(name)>-1})
+    }
+    if(sex){
+        data = data.filter(e=>{return e.sex.indexOf(sex)>-1})
+    }
+    if(age){
+        data = data.filter(e=>{return e.age<=age })
+    }
+    if(level){
+        data = data.filter(e=>{return e.level<= level})
+    }
+    data.forEach(profile=>{
+  
+        str += `QQ:${profile.id}\n用户名:${profile.name}\n性别:${profile.sex}\n年龄:${profile.age}\n等级:${profile.level}\n个性签名:${profile.sign}\n身份:${sf[profile.permission]}\n入群时间:${new Date(profile.joinTimestamp * 1000)}\n`
+        str += "==========================\n"
+    })
+    return str
+}
 
 
 
@@ -360,7 +467,10 @@ bot.on('GroupMessage', data => {
 
     console.log(id, key, groudId);
 
-
+    if (CONFIG.blacklist.indexOf(id) > -1) {
+        console.log("已过滤黑名单成员信息！")
+        return;
+    }
 
     //是否记录
     if (CONFIG.record) {
@@ -392,10 +502,10 @@ bot.on('GroupMessage', data => {
         }
     }
 
-    if(isHaveImage(data.messageChain)){
+    if (isHaveImage(data.messageChain)) {
         let img = getImgae(data.messageChain)
-        if(img){
-            downloadImg(img.imageId,img.url)
+        if (img) {
+            downloadImg(img.imageId, img.url)
         }
         return;
     }
@@ -409,20 +519,15 @@ bot.on('GroupMessage', data => {
                 sendToQQ(id, groudId, ANSWER[key])
             }
             else {
-                if (key.indexOf('画')>-1) {
+                if (key.indexOf('画') > -1) {
                     console.log("@me 要求绘画")
                     draw(key).then(img => {
                         sendImg(id, groudId, img)
                     })
                 }
-                else if(key.indexOf('表情包')>-1){
+                else if (key.indexOf('表情包') > -1) {
                     let img = getRandomFile("./img")
-                    sendLocalImg(id, groudId,img)
-                }
-                else if((key.indexOf("干嘛")>-1 || key.indexOf("做什么")>-1) && CONFIG.showme){
-                    screenR().then(v=>{
-                        sendImg(id,groudId,CONFIG.serverurl+ "screenshot.png")
-                    })
+                    sendLocalImg(id, groudId, img)
                 }
                 else {
                     console.log("@me 要求回答")
@@ -438,7 +543,7 @@ bot.on('GroupMessage', data => {
                 rootDeal(cmd[1], cmd[2], cmd[3], id, groudId)
             }
             else if (cmd[0] == '/admin') {
-                adminDeal(cmd[1], cmd[2], cmd[3], id, groudId,key)
+                adminDeal(cmd[1], cmd[2], cmd[3], id, groudId, key)
             }
             else {
                 console.log("无效命令！")
@@ -460,7 +565,7 @@ bot.on('GroupMessage', data => {
 //////////////////////////////////////////////////////////////////////////////////////
 //配置管理
 
-function adminDeal(key, option, data, id, gid,others) {
+function adminDeal(key, option, data, id, gid, others) {
     if (CONFIG.admin.indexOf(id) == -1) {
         sendToQQ(id, gid, "你没有该命令使用权限！")
         return;
@@ -527,27 +632,66 @@ function adminDeal(key, option, data, id, gid,others) {
                 sendToQQ(id, gid, '配置文件保存失败!')
             })
         }
+        else if(option=="groundinfo"){
+            saveGroundInfo(Number(data))
+        }
     }
-    else if(key == "eval"){
-        try{
+    else if (key == "eval") {
+        try {
             let code = others.split('/admin eval ')
-            
-            if(code.length>1){
+
+            if (code.length > 1) {
                 let e = eval(code[1])
-                if(e != undefined){
+                if (e != undefined) {
                     sendToQQ(id, gid, String(e))
                 }
-                
+
             }
         }
-        catch(err){
+        catch (err) {
             sendToQQ(id, gid, String(err))
         }
     }
-    else if(key == "path"){
-        if(option=="show"){
+    else if (key == "path") {
+        if (option == "show") {
             sendToQQ(id, gid, readdir(data))
         }
+    }
+    else if (key == "showme") {
+        screenR().then(v => {
+            sendImg(id, groudId, CONFIG.serverurl + "screenshot.png")
+        })
+    }
+    else if (key == "showlist") {
+        if (option == "friend") {
+            getFriendList().then(list => {
+                sendToQQ(id, gid, list)
+            })
+        }
+        else if (option == "ground") {
+            getGroupList().then(list => {
+                sendToQQ(id, gid, list)
+            })
+        }
+    }
+    else if (key == "showground") {
+        if (option == "members") {
+            getMemberList(Number(data)).then(msg => {
+                sendToQQ(id, gid, msg)
+            })
+        }
+        else if(option == "memberinfo"){
+            let lt = data.split(',')
+            sendToQQ(id, gid, getMemberBy(lt[0],lt[1],lt[2],lt[3]))
+        }
+    
+    }
+    else if (key == "make") {
+        if (option == "groundinfo") {
+            getGroudAllMemberInfo(Number(data));
+        }
+
+    
     }
 
 }
@@ -556,7 +700,7 @@ function adminDeal(key, option, data, id, gid,others) {
 function rootDeal(key, option, data, id, gid) {
     key = key.toLocaleLowerCase()
     option = option.toLocaleLowerCase()
-    if(id != CONFIG.root){
+    if (id != CONFIG.root) {
         sendToQQ(id, gid, "你没有该命令使用权限！")
         return;
     }
@@ -579,20 +723,20 @@ function rootDeal(key, option, data, id, gid) {
         sendToQQ(id, gid, JSON.stringify(CONFIG[option]))
     }
     else if (key == 'config') {
-        if(data[0]=="N"){
+        if (data[0] == "N") {
             data = Number(data.substr(1))
         }
         CONFIG[option] = data
-        sendToQQ(id, gid, CONFIG[option]+" " + typeof data)
+        sendToQQ(id, gid, CONFIG[option] + " " + typeof data)
     }
     else if (key == 'showme') {
-        if(option=="start"){
+        if (option == "start") {
             CONFIG.showme = true
         }
-        else{
+        else {
             CONFIG.showme = false
         }
-        sendToQQ(id, gid, !CONFIG.showme?'截图功能已关闭':'截图功能已开启')
+        sendToQQ(id, gid, !CONFIG.showme ? '截图功能已关闭' : '截图功能已开启')
     }
 }
 
