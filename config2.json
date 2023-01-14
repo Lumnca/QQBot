@@ -1,19 +1,20 @@
 {
-    "qq": 3568512380,
-    "authkey": "INITKEYQ2Yo8ETW",
+    "qq": 1959691989,
+    "authkey": "123456",
     "url": "http://0.0.0.0:8080",
-    "openaikey": "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",
+    "openaikey": "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",
     "record": true,
     "ground": [
-        767274788
+        482440682,
+        717173596
     ],
     "blacklist": [],
     "admin": [
-        724119519,
-        1050603098
+        963980447,
+        20074487
     ],
     "cmd": "/admin",
-    "root": 724119519,
+    "root": 963980447,
     "recordlen": 10,
     "emoticon": [],
     "showme": true,

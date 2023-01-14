@@ -101,13 +101,16 @@ V2.0新加功能
 
 查看所有群员信息（必须要执行了/admin make groundinfo qq群号）这个才能访问到群信息
 
-`/admin showground memberinfo ,,,`
+`/admin showground memberinfo ,,,,`
 
-三个逗号代表条件限制
+4个逗号代表条件限制
 
-`名字包含关键字,性别包含关键字,年龄小于这个值,qq等级低于这个值`
+`输出多少条数据, 名字包含关键字,性别包含关键字,年龄小于这个值,qq等级低于这个值`
 
-如`/admin showground memberinfo ,女,25,` 代表是女生年龄小于25
+如`/admin showground memberinfo 5,女,25,,` 代表是输出5条女生年龄小于25
+
+注意如果数据过多会导致QQ发不出来，所以要限制输出个数建议不超过20个。
+
 
 ## root权限
 

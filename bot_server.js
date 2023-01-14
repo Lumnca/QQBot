@@ -3,7 +3,7 @@ const { writeFile } = require('fs');
 const CONFIG = require('./config.json');
 const { Configuration, OpenAIApi } = require("openai");
 const axios = require('axios');
-const { MESSAGE, isAtBot, isHaveImage, getGroudQQ, getSenderName, getSenderQQ, getMesage, isContainGroup, getImgae, downloadImg, readdir, getRandomFile, screenR, readJSON } = require('./tool')
+const { MESSAGE, isAtBot, isHaveImage, getGroudQQ, getSenderName, getSenderQQ, getMesage, isContainGroup, getImgae, downloadImg, readdir, getRandomFile, screenR, readJSON, getRandomArrayElements } = require('./tool')
 const fs = require('fs');
 const ANSWER = require('./data/answer.json')
 const RECORD = require('./data/record.json')
@@ -383,7 +383,7 @@ const sex = {
  */
 async function getUserProfile(id) {
     const profile = await bot.getUserProfile({ qq: id });
-    let str = `====QQ:${id}====`;
+    let str = `====QQ:${id}====\n`;
     str = `用户名:${profile.nickname}\n性别:${sex[profile.sex]}\n等级:${profile.level}\n邮箱:${profile.email}\n个性签名:${profile.sign}`
     return str;
 }
@@ -422,7 +422,6 @@ function getMemberData(id){
 }
 
 function getMemberBy(name,sex,age,level){
-    let str = `=====获取结果=====`;
     let data = GROUNDMEMBERS
     if(name){
         data = data.filter(e=>{return e.name.indexOf(name)>-1})
@@ -436,8 +435,12 @@ function getMemberBy(name,sex,age,level){
     if(level){
         data = data.filter(e=>{return e.level<= level})
     }
+    return data
+}
+
+function formatDataOutput(data){
+    let str = `=====获取结果=====\n`;
     data.forEach(profile=>{
-  
         str += `QQ:${profile.id}\n用户名:${profile.name}\n性别:${profile.sex}\n年龄:${profile.age}\n等级:${profile.level}\n个性签名:${profile.sign}\n身份:${sf[profile.permission]}\n入群时间:${new Date(profile.joinTimestamp * 1000)}\n`
         str += "==========================\n"
     })
@@ -649,7 +652,7 @@ function adminDeal(key, option, data, id, gid, others) {
     }
     else if (key == "showme") {
         screenR().then(v => {
-            sendImg(id, groudId, CONFIG.serverurl + "screenshot.png")
+            sendImg(id, gid, CONFIG.serverurl + "screenshot.png")
         })
     }
     else if (key == "showlist") {
@@ -672,7 +675,16 @@ function adminDeal(key, option, data, id, gid, others) {
         }
         else if(option == "memberinfo"){
             let lt = data.split(',')
-            sendToQQ(id, gid, getMemberBy(lt[0],lt[1],lt[2],lt[3]))
+            let limit = Number(lt[0] || 0);
+            let members = getMemberBy(lt[1],lt[2],lt[3],lt[4]);
+            console.log(limit,members.length)
+            if(limit){
+                sendToQQ(id, gid, formatDataOutput(getRandomArrayElements(members,members.length-limit+1)))
+            }
+            else{
+                sendToQQ(id, gid, formatDataOutput(members))
+            }
+            
         }
     
     }
@@ -680,8 +692,6 @@ function adminDeal(key, option, data, id, gid, others) {
         if (option == "groundinfo") {
             getGroudAllMemberInfo(Number(data));
         }
-
-    
     }
 
 }

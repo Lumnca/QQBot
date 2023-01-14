@@ -140,9 +140,19 @@ var readJSON = async function(name){
     return json;
 }
 
+var getRandomArrayElements = function(arr, count) {
+    var shuffled = arr.slice(0), i = arr.length, temp, index;
+    while (count--) {
+      index = Math.floor(Math.random() * (i--));
+      temp = shuffled[index];
+      shuffled[index] = shuffled[i];
+      shuffled[i] = temp;
+    }
+    return shuffled.slice(0, i + 1);
+  }
 
 
 
 
 
-module.exports = { random, isHaveImage, getGroudQQ, getMesage, getSenderName, isAtBot, isHaveImage, getSenderQQ,downloadImg,getImgae, readdir, getRandomFile,screenR,readJSON}
+module.exports = { getRandomArrayElements,random, isHaveImage, getGroudQQ, getMesage, getSenderName, isAtBot, isHaveImage, getSenderQQ,downloadImg,getImgae, readdir, getRandomFile,screenR,readJSON}
