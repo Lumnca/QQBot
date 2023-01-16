@@ -253,8 +253,10 @@ bot.on('FriendMessage', data => {
     content = data.messageChain[1].text
     key = content
     id = data.sender.id
+    name = getSenderName(data)
     let groudId = null
     //console.log(data.messageChain)
+    recordTalk(id,name,groudId,data.messageChain)
 
     if (CONFIG.blacklist.indexOf(id) > -1) {
         console.log("已过滤黑名单成员信息！")
@@ -322,9 +324,12 @@ bot.on('NudgeEvent', member => {
 
 
 //获取机器人好友列表
-function getFriendList() {
+function getFriendList(length) {
     return new Promise((res, rej) => {
         bot.getFriendList().then(list => {
+            let data = list
+            console.log(data)
+            data = getRandomArrayElements(data,data.length-length+1)
             let str = '==我的好友列表==\n'
             list.forEach(m => {
                 str += `QQ:${m.id}\n名称:${m.name}\n=============\n`
@@ -337,11 +342,13 @@ function getFriendList() {
 }
 
 //获取机器人群列表
-function getGroupList() {
+function getGroupList(length) {
     return new Promise((res, rej) => {
         bot.getGroupList().then(v => {
+            let data = v.data
+            data = getRandomArrayElements(data,data.length-length+1)
             let str = '==我的群列表==\n';
-            v.data.forEach(m => {
+            data.forEach(m => {
                 str += `QQ群:${m.id}\n群名称:${m.name}\n=============\n`
             })
             res(str)
@@ -370,9 +377,9 @@ async function getMemberList(gid) {
     return str
 }
 const sex = {
-    'UNKNOWN' : '未识别',
-    'MALE' : '男',
-    'FEMALE' : '女'
+    'UNKNOWN': '未识别',
+    'MALE': '男',
+    'FEMALE': '女'
 }
 
 
@@ -393,11 +400,11 @@ var GROUNDMEMBERS = []
  * 获取群聊所有信息
  * @param {*} id 
  */
-async function getGroudAllMemberInfo(id){
+async function getGroudAllMemberInfo(id) {
     const memberList = await bot.getMemberList({ group: id });
     GROUNDMEMBERS = memberList;
-    memberList.forEach(m=>{
-        bot.getUserProfile({ qq: m.id }).then(v=>{
+    memberList.forEach(m => {
+        bot.getUserProfile({ qq: m.id }).then(v => {
             m.age = v.age
             m.level = v.level
             m.sex = sex[v.sex]
@@ -410,46 +417,97 @@ async function getGroudAllMemberInfo(id){
  * 保存记录的群聊信息
  * @param {*} id 
  */
-function saveGroundInfo(id){
-    saveJsonFile('./data/'+id+".json",GROUNDMEMBERS);
+function saveGroundInfo(id) {
+    saveJsonFile('./data/' + id + ".json", GROUNDMEMBERS);
 }
 
-function getMemberData(id){
-    readJSON(String(id)).then(v=>{
+function getMemberData(id) {
+    readJSON(String(id)).then(v => {
         GROUNDMEMBERS = v
         console.log('读取成功！')
     })
 }
 
-function getMemberBy(name,sex,age,level){
+function getMemberBy(name, sex, age, level) {
     let data = GROUNDMEMBERS
-    if(name){
-        data = data.filter(e=>{return e.name.indexOf(name)>-1})
+    if (name) {
+        data = data.filter(e => { return e.name.indexOf(name) > -1 })
     }
-    if(sex){
-        data = data.filter(e=>{return e.sex.indexOf(sex)>-1})
+    if (sex) {
+        data = data.filter(e => { return e.sex.indexOf(sex) > -1 })
     }
-    if(age){
-        data = data.filter(e=>{return e.age<=age })
+    if (age) {
+        data = data.filter(e => { return e.age <= age })
     }
-    if(level){
-        data = data.filter(e=>{return e.level<= level})
+    if (level) {
+        data = data.filter(e => { return e.level <= level })
     }
     return data
 }
 
-function formatDataOutput(data){
+function formatDataOutput(data) {
     let str = `=====获取结果=====\n`;
-    data.forEach(profile=>{
+    data.forEach(profile => {
         str += `QQ:${profile.id}\n用户名:${profile.name}\n性别:${profile.sex}\n年龄:${profile.age}\n等级:${profile.level}\n个性签名:${profile.sign}\n身份:${sf[profile.permission]}\n入群时间:${new Date(profile.joinTimestamp * 1000)}\n`
         str += "==========================\n"
     })
     return str
 }
 
-//=========================================
 //记录聊天记录的次数
 let count = 0;
+function recordTalk(id,name,gid,messageChain) {
+    //是否记录
+    if (CONFIG.record) {
+        count += 1
+        let msg = {
+            date: Math.floor(new Date().getTime() / 1000),
+            content: getMesage(messageChain),
+            gid : gid
+        }
+        if(isHaveImage(messageChain)){
+            let img = getImgae(messageChain)
+            msg.img = img
+        }
+        if (RECORD[id]) {
+            if (!RECORD[id].name) {
+                RECORD[id].name = name
+            }
+            RECORD[id].records.push(msg)
+        }
+        else {
+            RECORD[id] = {
+                name: name,
+                records: [msg]
+            }
+        }
+        if (count > CONFIG.recordlen) {
+            count = 0
+            saveJsonFile('./data/record.json', RECORD).then(v => {
+                console.log(v)
+            })
+        }
+    }
+}
+
+//
+/**
+ * 
+ */
+function getMemberTalkInfo(id,gid,date,length){
+    if(RECORD[id]){
+        let records = RECORD[id].records
+        let msgs = []
+        if(gid){
+            msgs = records.filter(e => { return e.gid == gid })
+        }
+        if(date){
+            msgs = records.filter(e => { return e.gid == gid })
+        }
+    }
+}
+
+//=========================================
 // 监听群消息事件
 bot.on('GroupMessage', data => {
 
@@ -464,36 +522,9 @@ bot.on('GroupMessage', data => {
         console.log("已过滤黑名单成员信息！")
         return;
     }
+    //记录聊天信息
+    recordTalk(id,name,groudId,data.messageChain)
 
-    //是否记录
-    if (CONFIG.record) {
-        count += 1
-        if (RECORD[id]) {
-            if (!RECORD[id].name) {
-                RECORD[id].name = name
-            }
-            RECORD[id].records.push({
-                date: Math.floor(new Date().getTime() / 1000),
-                content: key
-            })
-        }
-        else {
-            RECORD[id] = {
-                name: name,
-                records: [{
-                    date: Math.floor(new Date().getTime() / 1000),
-                    content: key
-                }]
-            }
-        }
-
-        if (count > CONFIG.recordlen) {
-            count = 0
-            saveJsonFile('./data/record.json', RECORD).then(v => {
-                console.log(v)
-            })
-        }
-    }
 
     if (isHaveImage(data.messageChain)) {
         let img = getImgae(data.messageChain)
@@ -625,7 +656,7 @@ function adminDeal(key, option, data, id, gid, others) {
                 sendToQQ(id, gid, '配置文件保存失败!')
             })
         }
-        else if(option=="groundinfo"){
+        else if (option == "groundinfo") {
             saveGroundInfo(Number(data))
         }
     }
@@ -657,12 +688,12 @@ function adminDeal(key, option, data, id, gid, others) {
     }
     else if (key == "showlist") {
         if (option == "friend") {
-            getFriendList().then(list => {
+            getFriendList(Number(data)).then(list => {
                 sendToQQ(id, gid, list)
             })
         }
         else if (option == "ground") {
-            getGroupList().then(list => {
+            getGroupList(Number(data)).then(list => {
                 sendToQQ(id, gid, list)
             })
         }
@@ -673,20 +704,20 @@ function adminDeal(key, option, data, id, gid, others) {
                 sendToQQ(id, gid, msg)
             })
         }
-        else if(option == "memberinfo"){
+        else if (option == "memberinfo") {
             let lt = data.split(',')
             let limit = Number(lt[0] || 0);
-            let members = getMemberBy(lt[1],lt[2],lt[3],lt[4]);
-            console.log(limit,members.length)
-            if(limit){
-                sendToQQ(id, gid, formatDataOutput(getRandomArrayElements(members,members.length-limit+1)))
+            let members = getMemberBy(lt[1], lt[2], lt[3], lt[4]);
+            console.log(limit, members.length)
+            if (limit) {
+                sendToQQ(id, gid, formatDataOutput(getRandomArrayElements(members, members.length - limit + 1)))
             }
-            else{
+            else {
                 sendToQQ(id, gid, formatDataOutput(members))
             }
-            
+
         }
-    
+
     }
     else if (key == "make") {
         if (option == "groundinfo") {

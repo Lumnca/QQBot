@@ -1,8 +1,8 @@
 {
     "qq": 3568512380,
-    "authkey": "INITKEYQ2Yo8ETW",
+    "authkey": "123456",
     "url": "http://0.0.0.0:8080",
-    "openaikey": "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",
+    "openaikey": "--",
     "record": true,
     "ground": [
         767274788

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/styles/default.min.css">
+    <title>Document</title>
+</head>
+
+<body style="margin: 0;">
+    <div id="app">
+        <el-row>
+            <el-col :xs="0" :sm="1" :md="1" :lg="1" :xl="4">
+                <div>&nbsp;</div>
+            </el-col>
+            <el-col :xs="24" :sm="22" :md="22" :lg="22" :xl="16">
+                <div>
+                    <div style="width: 480px;padding: 16px;">
+                        <el-input placeholder="请输入查询QQ:" v-model="input1">
+                            <template slot="prepend">
+                                {{record[input1]?record[input1].name:''}}
+                            </template>
+                            <el-button slot="append" icon="el-icon-search" @click="query()"></el-button>
+
+                            
+                        </el-input>
+                        <div>
+                           
+                        </div>
+                        
+                    </div>
+                </div>
+                <template>
+                    <el-table
+                        :data="tableData.filter(data => !search || data.content.toLowerCase().includes(search.toLowerCase()))"
+                        style="width: 100%">
+                        <el-table-column label="日期" prop="date" sortable>
+                            <template slot-scope="scope">
+                                {{format(new Date(scope.row.date * 1000))}}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="群聊" prop="gid" width="200">
+                        </el-table-column>
+                        <el-table-column label="聊天内容" prop="content">
+                        </el-table-column>
+                        <el-table-column label="图片内容" prop="img">
+                            <template slot-scope="scope">
+                                <img v-if="scope.row.img" :src="scope.row.img.url">
+                            </template>
+                        </el-table-column>
+                        <el-table-column align="right">
+                            <template slot="header" slot-scope="scope">
+                                <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />
+                            </template>
+
+                        </el-table-column>
+                    </el-table>
+                </template>
+            </el-col>
+            <el-col :xs="0" :sm="1" :md="1" :lg="1" :xl="4">
+                <div>&nbsp;</div>
+            </el-col>
+
+        </el-row>
+    </div>
+
+    <style>
+        .text-item {
+            padding: 16px;
+        }
+
+        .bg-purple-dark {
+            background: #99a9bf;
+        }
+
+        .bg-purple {
+            background: #d3dce6;
+        }
+
+        .bg-purple-light {
+            background: #f2f2e5;
+        }
+
+        .grid-content {
+            border-radius: 4px;
+            min-height: 36px;
+        }
+    </style>
+
+
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        let RECORD = {}
+        axios
+            .get('http://127.0.0.1:3000/data/record.json')
+            .then(response => {
+                RECORD = response.data;
+                app.record = response.data;
+                console.log(response)
+            })
+            .catch(function (error) { // 请求失败处理
+                console.log(error);
+            });
+        var app = new Vue({
+            el: '#app',
+            data: function () {
+                return {
+                    visible: false, msg: '', list: [
+
+                    ], tableData: [], search: '', input1: '',record:RECORD
+                }
+            },
+            methods: {
+                chat() {
+                    this.list.push({
+                        tag: true,
+                        content: this.msg
+                    })
+                    let line = {
+                        tag: false,
+                        content: '',
+                        loading: true
+                    }
+                    this.list.push(line)
+
+
+                },
+                query() {
+                    if (RECORD[this.input1]) {
+                        this.tableData = RECORD[this.input1].records;
+                    }
+                    else {
+                        this.tableData = []
+                    }
+
+                },
+                format(date) {
+                    var y = date.getFullYear();
+                    var m = date.getMonth() + 1;
+                    m = m < 10 ? '0' + m : m;
+                    var d = date.getDate();
+                    d = d < 10 ? ('0' + d) : d;
+                    var h = date.getHours();
+                    h = h < 10 ? ('0' + h) : h;
+                    var minute = date.getMinutes();
+                    var second = date.getSeconds();
+                    minute = minute < 10 ? ('0' + minute) : minute;
+                    second = second < 10 ? ('0' + second) : second;
+                    var time = y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second;
+                    return time
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>

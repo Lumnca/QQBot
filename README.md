@@ -81,11 +81,11 @@ V2.0新加功能
 
 查看机器人好友列表:
 
-`/admin showlist friend`
+`/admin showlist friend N` 显示N个机器人的QQ好友
 
 查看机器人群列表:
 
-`/admin showlist ground`
+`/admin showlist ground N` 显示N个机器人所加的群
 
 查看某个群的所有成员
 
