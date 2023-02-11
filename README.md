@@ -77,7 +77,7 @@ V2.0新加功能
 
 查看当前电脑截图:
 
-`/admin showme`
+`/admin showme now`
 
 查看机器人好友列表:
 
@@ -110,6 +110,31 @@ V2.0新加功能
 如`/admin showground memberinfo 5,女,25,,` 代表是输出5条女生年龄小于25
 
 注意如果数据过多会导致QQ发不出来，所以要限制输出个数建议不超过20个。
+
+查询记录的好友QQ的聊天记录
+
+`/admin record search QQ号 群号 起始日期 不超过的日期 最大个数`
+
+比如:
+`/admin record search 55555 123456 2022/2/1 2022/2/9 5`
+
+表示查询qq群号为123456中的qq号为55555的聊天记录从2022/2/1~2022/2/9中取5条
+
+若要查询QQ好友记录只需要把群号设置为null即可:
+
+`/admin record search 55555 null 2022/2/1 2022/2/9 5`
+
+查看帮助,admin指令相关信息
+
+`/admin help admin`
+
+查看帮助,miral控制台指令相关信息
+
+`/admin help cmd`
+
+向miral控制台发出指令（可以重新登录QQ）
+
+`/admin console input 指令（用空格分开）`
 
 
 ## root权限
